@@ -1,22 +1,160 @@
-<!doctype html><html data-build-id="7bd3c89ce0" data-git-hash="4ca64bb393ba9dcc3b90a742b597f97bd3c89ce0" data-build-timestamp="1775004355" data-version="1.0.0" data-env="" lang="en" data-theme="claude" data-mode="light" class="h-screen antialiased scroll-smooth"><head data-ion-ip-country="JP"><link rel="preconnect" href="https://assets-proxy.anthropic.com" crossorigin><link rel="dns-prefetch" href="https://assets-proxy.anthropic.com"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Claude</title><meta name="description" content="Claude is Anthropic's AI, built for problem solvers. Tackle complex challenges, analyze data, write code, and think through your hardest work."><meta name="apple-itunes-app" content="app-id=6473753684"><meta property="og:type" content="website"><meta property="og:site_name" content="Claude"><meta property="og:image" content="https://claude.ai/images/claude_ogimage.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><link rel="icon" type="image/svg+xml" href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/cd02a42d9-Vq_H3mgS.svg"><link rel="icon" type="image/png" sizes="32x32" href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/ce67964e7-CAX1bqSh.png"><link rel="icon" type="image/png" sizes="16x16" href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/c03e51811-DebilQLI.png"><link rel="shortcut icon" href="/favicon.ico"><link rel="apple-touch-icon" href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/c129d018a-jJjJELY8.png"><link rel="apple-touch-startup-image" href="/images/claude_app_icon.png"><link rel="manifest" href="/manifest.json"><meta name="mobile-web-app-capable" content="yes"><link rel="preload" href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/cc27851ad-CFxw3nG7.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/c66fc489e-C-BHYa_K.woff2" as="font" type="font/woff2" crossorigin><script nonce="iROG4xo4pBpWCP2h+nSssQ==">void 0===globalThis.process&&(globalThis.process={env:{},cwd:function(){return"/"}}),void 0===globalThis.global&&(globalThis.global=globalThis)</script><script type="application/ld+json" nonce="iROG4xo4pBpWCP2h+nSssQ==">{
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "WebSite",
-            "name": "Claude",
-            "alternateName": ["Claude.ai", "Claude by Anthropic"],
-            "url": "https://claude.com"
-          },
-          {
-            "@type": "Organization",
-            "name": "Anthropic",
-            "url": "https://www.anthropic.com",
-            "logo": "https://claude.ai/images/claude_ogimage.png",
-            "sameAs": [
-              "https://x.com/AnthropicAI",
-              "https://www.linkedin.com/company/anthropic",
-              "https://www.youtube.com/@anthropic-ai"
-            ]
-          }
-        ]
-      }</script><script nonce="iROG4xo4pBpWCP2h+nSssQ==">!function(){try{performance.mark?.("rq_cache:preload_start");const e="keyval-store",o="keyval",r="react-query-cache",t=new Promise(t=>{if(!window.indexedDB)return void t(void 0);const c=indexedDB.open(e);c.onupgradeneeded=()=>{c.transaction?.abort()},c.onerror=()=>t(void 0),c.onsuccess=()=>{const a=c.result;if(!a.objectStoreNames.contains(o))return a.close(),indexedDB.deleteDatabase(e),void t(void 0);try{const e=a.transaction(o,"readonly").objectStore(o).get(r);e.onerror=()=>{a.close(),t(void 0)},e.onsuccess=()=>{a.close(),window.__PRELOADED_IDB_CACHE_RESULT__=e.result,t(e.result)}}catch{a.close(),t(void 0)}}});window.__PRELOADED_IDB_CACHE__=t,performance.measure?.("rq_cache:preload_exec",{start:"rq_cache:preload_start"})}catch{}}()</script><script type="module" crossorigin src="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-B120cFwe.js" nonce="iROG4xo4pBpWCP2h+nSssQ=="></script><link rel="modulepreload" crossorigin href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-Bh1iTGir.js"><link rel="modulepreload" crossorigin href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/tree-sitter-B7VRI_7-.js"><link rel="stylesheet" crossorigin href="https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/c6a992d55-DKkwzzIA.css"></head><body class="bg-bg-100 text-text-100 font-ui min-h-screen"><div id="root"></div></body></html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAMELAB — AI-Crafted Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9LEM9DZ9Z6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-9LEM9DZ9Z6');
+  </script>
+  <style>
+    :root {
+      --bg: #07070f; --bg2: #0d0d1a; --bg3: #111122;
+      --border: #1e1e35; --border2: #2a2a45;
+      --cyan: #00f5ff; --cyan-dim: #00a8b5;
+      --purple: #b060ff; --text: #d0d0e0;
+      --text-dim: #606080; --text-faint: #303050;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-weight: 300; min-height: 100vh; overflow-x: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); pointer-events: none; z-index: 1000; }
+    body::after { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+    header { position: relative; z-index: 10; padding: 2.5rem 2rem 2rem; text-align: center; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(0,245,255,0.04) 0%, transparent 100%); animation: fadeUp 0.4s ease both; }
+    .logo { font-family: 'Orbitron', monospace; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; letter-spacing: 0.12em; color: #fff; text-transform: uppercase; line-height: 1; }
+    .logo .accent { color: var(--cyan); }
+    .logo-sub { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.25em; margin-top: 0.5rem; text-transform: uppercase; }
+    .logo-glow { width: 200px; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); margin: 1rem auto 0; opacity: 0.6; }
+    nav { position: sticky; top: 0; z-index: 100; display: flex; justify-content: center; background: rgba(7,7,15,0.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); }
+    nav a { font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.2em; color: var(--text-dim); text-decoration: none; text-transform: uppercase; padding: 1rem 1.5rem; border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; }
+    nav a:hover, nav a.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+    .stats-bar { position: relative; z-index: 10; display: flex; justify-content: center; background: var(--bg2); border-bottom: 1px solid var(--border); animation: fadeUp 0.5s 0.1s ease both; }
+    .stat-item { text-align: center; padding: 1rem 2.5rem; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-num { font-family: 'Orbitron', monospace; font-size: 1.4rem; font-weight: 700; color: var(--cyan); }
+    .stat-label { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--text-faint); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 3px; }
+    main { position: relative; z-index: 10; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
+    .section-label { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.25em; color: var(--cyan-dim); text-transform: uppercase; }
+    .section-line { flex: 1; height: 1px; background: var(--border); }
+    .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 3rem; }
+    .game-card { background: var(--bg2); padding: 1.4rem; cursor: pointer; transition: background 0.2s; position: relative; overflow: hidden; text-decoration: none; display: block; }
+    .game-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--cyan); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
+    .game-card:hover { background: var(--bg3); }
+    .game-card:hover::after { transform: scaleX(1); }
+    .card-tag { font-family: 'Share Tech Mono', monospace; font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; display: inline-block; margin-bottom: 0.8rem; }
+    .tag-runner { color: #00f5ff; background: rgba(0,245,255,0.1); border: 1px solid rgba(0,245,255,0.25); }
+    .tag-puzzle { color: #60b0ff; background: rgba(0,100,255,0.1); border: 1px solid rgba(0,100,255,0.25); }
+    .tag-arcade { color: #c060ff; background: rgba(160,0,255,0.1); border: 1px solid rgba(160,0,255,0.25); }
+    .tag-action { color: #ff6060; background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.25); }
+    .tag-casual { color: #60ff90; background: rgba(0,200,80,0.1); border: 1px solid rgba(0,200,80,0.25); }
+    .card-new-badge { position: absolute; top: 10px; right: 10px; font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; color: var(--purple); border: 1px solid rgba(176,96,255,0.4); background: rgba(176,96,255,0.1); padding: 2px 6px; letter-spacing: 0.1em; }
+    .card-icon { font-size: 1.8rem; margin-bottom: 0.7rem; display: block; }
+    .card-name { font-family: 'Orbitron', monospace; font-size: 0.85rem; font-weight: 600; color: #fff; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .card-desc { font-size: 0.72rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 1rem; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .card-plays { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--text-faint); }
+    .card-plays span { color: var(--cyan-dim); }
+    .card-play-btn { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--bg2); background: var(--cyan); border: none; padding: 4px 10px; cursor: pointer; text-transform: uppercase; transition: background 0.2s; }
+    .card-play-btn:hover { background: #fff; }
+    .card-coming { background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; border: 1px dashed var(--border2); gap: 0.5rem; }
+    .card-coming-icon { font-size: 1.5rem; opacity: 0.15; }
+    .card-coming-label { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--text-faint); letter-spacing: 0.2em; }
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .ranking-table { background: var(--bg2); border: 1px solid var(--border); }
+    .rank-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .rank-row:last-child { border-bottom: none; }
+    .rank-row:hover { background: var(--bg3); }
+    .rank-pos { font-family: 'Orbitron', monospace; font-size: 0.7rem; color: var(--text-faint); min-width: 24px; text-align: right; }
+    .rank-pos.gold { color: #ffd700; }
+    .rank-name { flex: 1; font-size: 0.8rem; color: var(--text); }
+    .rank-bar-wrap { width: 70px; height: 2px; background: var(--border2); }
+    .rank-bar-fill { height: 100%; background: var(--cyan); }
+    .rank-count { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; color: var(--text-dim); min-width: 45px; text-align: right; }
+    .recent-list { background: var(--bg2); border: 1px solid var(--border); }
+    .recent-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .recent-row:last-child { border-bottom: none; }
+    .recent-row:hover { background: var(--bg3); }
+    .recent-badge { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; padding: 2px 6px; letter-spacing: 0.1em; }
+    .badge-new { color: var(--purple); border: 1px solid rgba(176,96,255,0.3); background: rgba(176,96,255,0.08); }
+    .recent-name { flex: 1; font-size: 0.8rem; color: var(--text); }
+    footer { position: relative; z-index: 10; text-align: center; padding: 2rem; border-top: 1px solid var(--border); background: var(--bg2); }
+    .footer-text { font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: var(--text-faint); letter-spacing: 0.2em; text-transform: uppercase; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 640px) { .bottom-grid { grid-template-columns: 1fr; } nav a { padding: 0.8rem; font-size: 0.65rem; } .stat-item { padding: 0.8rem 1.2rem; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">GAME<span class="accent">LAB</span></div>
+    <div class="logo-sub">AI-Crafted Mini Games Collection</div>
+    <div class="logo-glow"></div>
+  </header>
+  <nav>
+    <a href="#games" class="active">All Games</a>
+    <a href="#ranking">Ranking</a>
+    <a href="#new">New</a>
+    <a href="#">About</a>
+  </nav>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num">1</div><div class="stat-label">Games</div></div>
+    <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">Total Plays</div></div>
+    <div class="stat-item"><div class="stat-num">2026</div><div class="stat-label">Est.</div></div>
+  </div>
+  <main>
+    <section id="games">
+      <div class="section-header">
+        <span class="section-label">Game Library</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="games-grid">
+        <a class="game-card" href="games/geometry-dash.html">
+          <span class="card-new-badge">NEW</span>
+          <span class="card-tag tag-runner">Runner</span>
+          <span class="card-icon">⚡</span>
+          <div class="card-name">NEON DASH</div>
+          <div class="card-desc">障害物を飛び越えて生き残れ。ジオメトリーダッシュ風ランナー</div>
+          <div class="card-footer">
+            <span class="card-plays">▶ <span>0</span> plays</span>
+            <button class="card-play-btn">Play</button>
+          </div>
+        </a>
+        <div class="game-card card-coming"><span class="card-coming-icon">＋</span><span class="card-coming-label">Coming Soon</span></div>
+        <div class="game-card card-coming"><span class="card-coming-icon">＋</span><span class="card-coming-label">Coming Soon</span></div>
+      </div>
+    </section>
+    <div class="bottom-grid">
+      <section id="ranking">
+        <div class="section-header"><span class="section-label">Ranking</span><div class="section-line"></div></div>
+        <div class="ranking-table">
+          <div class="rank-row">
+            <span class="rank-pos gold">01</span>
+            <span class="rank-name">NEON DASH</span>
+            <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:100%"></div></div>
+            <span class="rank-count">0</span>
+          </div>
+        </div>
+      </section>
+      <section id="new">
+        <div class="section-header"><span class="section-label">Recently Added</span><div class="section-line"></div></div>
+        <div class="recent-list">
+          <div class="recent-row">
+            <span class="recent-badge badge-new">NEW</span>
+            <span class="recent-name">NEON DASH</span>
+            <span class="card-tag tag-runner" style="font-size:0.58rem;">Runner</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer>
+    <div class="footer-text">GAMELAB &nbsp;·&nbsp; AI-Crafted Games &nbsp;·&nbsp; 2026</div>
+  </footer>
+</body>
+</html>
