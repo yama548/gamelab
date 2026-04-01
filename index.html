@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAMELAB — AI-Crafted Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07070f;
+      --bg2: #0d0d1a;
+      --bg3: #111122;
+      --border: #1e1e35;
+      --border2: #2a2a45;
+      --cyan: #00f5ff;
+      --cyan-dim: #00a8b5;
+      --purple: #b060ff;
+      --text: #d0d0e0;
+      --text-dim: #606080;
+      --text-faint: #303050;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Grid background */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(0,245,255,0.04) 0%, transparent 100%);
+    }
+
+    .logo {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      color: #fff;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .logo .accent { color: var(--cyan); }
+
+    .logo-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.25em;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    /* Cyan glow under logo */
+    .logo-glow {
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      margin: 1rem auto 0;
+      opacity: 0.6;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      background: rgba(7,7,15,0.95);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    nav a {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      text-decoration: none;
+      text-transform: uppercase;
+      padding: 1rem 1.5rem;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    nav a:hover, nav a.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+    }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 1rem 2.5rem;
+      border-right: 1px solid var(--border);
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    .stat-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* ─── MAIN CONTENT ─── */
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .section-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.25em;
+      color: var(--cyan-dim);
+      text-transform: uppercase;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ─── GAME GRID ─── */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+
+    .game-card {
+      background: var(--bg2);
+      padding: 1.4rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+
+    .game-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: var(--cyan);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover { background: var(--bg3); }
+    .game-card:hover::after { transform: scaleX(1); }
+
+    .card-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+      display: inline-block;
+      margin-bottom: 0.8rem;
+    }
+
+    .tag-puzzle  { color: #60b0ff; background: rgba(0,100,255,0.1); border: 1px solid rgba(0,100,255,0.25); }
+    .tag-arcade  { color: #c060ff; background: rgba(160,0,255,0.1); border: 1px solid rgba(160,0,255,0.25); }
+    .tag-action  { color: #ff6060; background: rgba(255,0,0,0.1);   border: 1px solid rgba(255,0,0,0.25); }
+    .tag-casual  { color: #60ff90; background: rgba(0,200,80,0.1);  border: 1px solid rgba(0,200,80,0.25); }
+
+    .card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.7rem;
+      display: block;
+      filter: grayscale(30%);
+    }
+
+    .card-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-desc {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-plays {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-faint);
+    }
+
+    .card-plays span { color: var(--cyan-dim); }
+
+    .card-play-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--bg2);
+      background: var(--cyan);
+      border: none;
+      padding: 4px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.2s;
+    }
+
+    .card-play-btn:hover { background: #fff; }
+
+    .card-coming {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      border: 1px dashed var(--border2);
+      gap: 0.5rem;
+    }
+
+    .card-coming-icon {
+      font-size: 1.5rem;
+      opacity: 0.15;
+    }
+
+    .card-coming-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      letter-spacing: 0.2em;
+    }
+
+    /* ─── BOTTOM GRID ─── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    /* ─── RANKING ─── */
+    .ranking-table {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+    }
+
+    .rank-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .rank-row:last-child { border-bottom: none; }
+    .rank-row:hover { background: var(--bg3); }
+
+    .rank-pos {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .rank-pos.gold   { color: #ffd700; }
+    .rank-pos.silver { color: #c0c0c0; }
+    .rank-pos.bronze { color: #cd7f32; }
+
+    .rank-name {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+
+    .rank-bar-wrap {
+      width: 70px;
+      height: 2px;
+      background: var(--border2);
+    }
+
+    .rank-bar-fill {
+      height: 100%;
+      background: var(--cyan);
+    }
+
+    .rank-count {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      min-width: 45px;
+      text-align: right;
+    }
+
+    /* ─── RECENT ─── */
+    .recent-list {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+    }
+
+    .recent-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .recent-row:last-child { border-bottom: none; }
+    .recent-row:hover { background: var(--bg3); }
+
+    .recent-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      padding: 2px 6px;
+      letter-spacing: 0.1em;
+    }
+
+    .badge-new  { color: var(--purple); border: 1px solid rgba(176,96,255,0.3); background: rgba(176,96,255,0.08); }
+    .badge-dash { color: var(--text-faint); }
+
+    .recent-name { flex: 1; font-size: 0.8rem; color: var(--text); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .footer-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--text-faint);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up { animation: fadeUp 0.5s ease both; }
+
+    header   { animation: fadeUp 0.4s ease both; }
+    .stats-bar { animation: fadeUp 0.5s 0.1s ease both; }
+    .games-grid .game-card:nth-child(1) { animation: fadeUp 0.4s 0.15s ease both; }
+    .games-grid .game-card:nth-child(2) { animation: fadeUp 0.4s 0.2s  ease both; }
+    .games-grid .game-card:nth-child(3) { animation: fadeUp 0.4s 0.25s ease both; }
+    .games-grid .game-card:nth-child(4) { animation: fadeUp 0.4s 0.3s  ease both; }
+    .games-grid .game-card:nth-child(5) { animation: fadeUp 0.4s 0.35s ease both; }
+    .games-grid .game-card:nth-child(6) { animation: fadeUp 0.4s 0.4s  ease both; }
+
+    @media (max-width: 640px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+      nav a { padding: 0.8rem 0.8rem; font-size: 0.65rem; }
+      .stat-item { padding: 0.8rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">GAME<span class="accent">LAB</span></div>
+    <div class="logo-sub">AI-Crafted Mini Games Collection</div>
+    <div class="logo-glow"></div>
+  </header>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#games" class="active">All Games</a>
+    <a href="#ranking">Ranking</a>
+    <a href="#new">New</a>
+    <a href="#">About</a>
+  </nav>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num" id="game-count">5</div>
+      <div class="stat-label">Games</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="total-plays">4,093</div>
+      <div class="stat-label">Total Plays</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">2026</div>
+      <div class="stat-label">Est.</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- GAME LIST -->
+    <section id="games">
+      <div class="section-header">
+        <span class="section-label">Game Library</span>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="games-grid">
+
+        <a class="game-card" href="games/memory-flip.html">
+          <span class="card-tag tag-puzzle">Puzzle</span>
+          <span class="card-icon">🧩</span>
+          <div class="card-name">Memory Flip</div>
+          <div class="card-desc">カードをめくって同じ絵柄を見つけ出す記憶系パズル</div>
+          <div class="card-footer">
+            <span class="card-plays">▶ <span>1,204</span> plays</span>
+            <button class="card-play-btn">Play</button>
+          </div>
+        </a>
+
+        <a class="game-card" href="games/neon-snake.html">
+          <span class="card-tag tag-arcade">Arcade</span>
+          <span class="card-icon">🐍</span>
+          <div class="card-name">Neon Snake</div>
+          <div class="card-desc">光るフィールドを駆け抜けるクラシックスネークゲーム</div>
+          <div class="card-footer">
+            <span class="card-plays">▶ <span>987</span> plays</span>
+            <button class="card-play-btn">Play</button>
+          </div>
+        </a>
+
+        <a class="game-card" href="games/number-rush.html">
+          <span class="card-tag tag-action">Action</span>
+          <span class="card-icon">🔢</span>
+          <div class="card-name">Number Rush</div>
+          <div class="card-desc">制限時間内に数字を昇順でタップしていく瞬発力ゲーム</div>
+          <div class="card-footer">
+            <span class="card-plays">▶ <span>756</span> plays</span>
+            <button class="card-play-btn">Play</button>
+          </div>
+        </a>
+
+        <a class="game-card" href="games/dot-target.html">
+          <span class="card-tag tag-casual">Casual</span>
+          <span class="card-icon">🎯</span>
+          <div class="card-name">Dot Target</div>
+          <div class="card-desc">動き回るターゲットをクリックして高スコアを狙え</div>
+          <div class="card-footer">
+            <span class="card-plays">▶ <span>634</span> plays</span>
+            <button class="card-play-btn">Play</button>
+          </div>
+        </a>
+
+        <a class="game-card" href="games/mine-sweep.html">
+          <span class="card-tag tag-puzzle">Puzzle</span>
+          <span class="card-icon">💣</span>
+          <div class="card-name">Mine Sweep X</div>
+          <div class="card-desc">地雷を避けながら全マスを開けるロジック系ゲーム</div>
+          <div class="card-footer">
+            <span class="card-plays">▶ <span>512</span> plays</span>
+            <button class="card-play-btn">Play</button>
+          </div>
+        </a>
+
+        <div class="game-card card-coming">
+          <span class="card-coming-icon">＋</span>
+          <span class="card-coming-label">Coming Soon</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BOTTOM: RANKING + RECENT -->
+    <div class="bottom-grid">
+
+      <!-- RANKING -->
+      <section id="ranking">
+        <div class="section-header">
+          <span class="section-label">Ranking</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="ranking-table">
+          <div class="rank-row">
+            <span class="rank-pos gold">01</span>
+            <span class="rank-name">Memory Flip</span>
+            <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:100%"></div></div>
+            <span class="rank-count">1,204</span>
+          </div>
+          <div class="rank-row">
+            <span class="rank-pos silver">02</span>
+            <span class="rank-name">Neon Snake</span>
+            <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:82%"></div></div>
+            <span class="rank-count">987</span>
+          </div>
+          <div class="rank-row">
+            <span class="rank-pos bronze">03</span>
+            <span class="rank-name">Number Rush</span>
+            <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:63%"></div></div>
+            <span class="rank-count">756</span>
+          </div>
+          <div class="rank-row">
+            <span class="rank-pos">04</span>
+            <span class="rank-name">Dot Target</span>
+            <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:53%"></div></div>
+            <span class="rank-count">634</span>
+          </div>
+          <div class="rank-row">
+            <span class="rank-pos">05</span>
+            <span class="rank-name">Mine Sweep X</span>
+            <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:43%"></div></div>
+            <span class="rank-count">512</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEW GAMES -->
+      <section id="new">
+        <div class="section-header">
+          <span class="section-label">Recently Added</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="recent-list">
+          <div class="recent-row">
+            <span class="recent-badge badge-new">NEW</span>
+            <span class="recent-name">Mine Sweep X</span>
+            <span class="card-tag tag-puzzle" style="font-size:0.58rem;">Puzzle</span>
+          </div>
+          <div class="recent-row">
+            <span class="recent-badge badge-dash">—</span>
+            <span class="recent-name">Dot Target</span>
+            <span class="card-tag tag-casual" style="font-size:0.58rem;">Casual</span>
+          </div>
+          <div class="recent-row">
+            <span class="recent-badge badge-dash">—</span>
+            <span class="recent-name">Number Rush</span>
+            <span class="card-tag tag-action" style="font-size:0.58rem;">Action</span>
+          </div>
+          <div class="recent-row">
+            <span class="recent-badge badge-dash">—</span>
+            <span class="recent-name">Neon Snake</span>
+            <span class="card-tag tag-arcade" style="font-size:0.58rem;">Arcade</span>
+          </div>
+          <div class="recent-row">
+            <span class="recent-badge badge-dash">—</span>
+            <span class="recent-name">Memory Flip</span>
+            <span class="card-tag tag-puzzle" style="font-size:0.58rem;">Puzzle</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-text">GAMELAB &nbsp;·&nbsp; AI-Crafted Games &nbsp;·&nbsp; 2026</div>
+  </footer>
+
+</body>
+</html>
