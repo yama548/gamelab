@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON DASH — GAMELAB</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #07070f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Share Tech Mono', monospace;
+      overflow: hidden;
+      user-select: none;
+    }
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      z-index: 100;
+    }
+    .site-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.8rem;
+      color: #333;
+      letter-spacing: 0.2em;
+    }
+    .site-title a {
+      color: #333;
+      text-decoration: none;
+    }
+    .site-title a:hover { color: #00f5ff; }
+    .score-display {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      color: #00f5ff;
+      letter-spacing: 0.1em;
+    }
+    #gameCanvas {
+      display: block;
+      border: 1px solid #1e1e35;
+      image-rendering: pixelated;
+    }
+    .ui-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(7,7,15,0.92);
+      z-index: 50;
+      transition: opacity 0.3s;
+    }
+    .ui-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .game-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.3rem;
+    }
+    .game-title span { color: #00f5ff; }
+    .game-sub {
+      font-size: 0.7rem;
+      color: #444;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+    }
+    .best-score {
+      font-size: 0.75rem;
+      color: #555;
+      letter-spacing: 0.2em;
+      margin-bottom: 0.5rem;
+    }
+    .best-score span { color: #00f5ff; }
+    .play-btn {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: #07070f;
+      background: #00f5ff;
+      border: none;
+      padding: 0.8rem 2.5rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      margin-top: 1.5rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .play-btn:hover { background: #fff; }
+    .play-btn:active { transform: scale(0.97); }
+    .hint {
+      font-size: 0.65rem;
+      color: #333;
+      letter-spacing: 0.2em;
+      margin-top: 1rem;
+    }
+    .death-score {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    .death-score span { color: #00f5ff; }
+    .progress-bar-wrap {
+      width: 200px;
+      height: 3px;
+      background: #1e1e35;
+      margin: 1rem 0;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: #00f5ff;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="site-title"><a href="../index.html">← GAMELAB</a></div>
+  <div class="score-display" id="scoreDisplay">0</div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- START SCREEN -->
+<div class="ui-overlay" id="startScreen">
+  <div class="game-title">NEON<span>DASH</span></div>
+  <div class="game-sub">Geometry Runner</div>
+  <div class="best-score">BEST: <span id="bestScoreStart">0</span></div>
+  <button class="play-btn" id="startBtn">START</button>
+  <div class="hint">CLICK / TAP / SPACE to jump</div>
+</div>
+
+<!-- DEATH SCREEN -->
+<div class="ui-overlay hidden" id="deathScreen">
+  <div class="game-title" style="font-size:clamp(1.5rem,4vw,2.5rem);">YOU DIED</div>
+  <div class="game-sub">try again</div>
+  <div class="death-score">SCORE: <span id="deathScore">0</span></div>
+  <div class="best-score">BEST: <span id="bestScoreDeath">0</span></div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+  <button class="play-btn" id="retryBtn">RETRY</button>
+  <div class="hint">CLICK / TAP / SPACE</div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Responsive canvas
+function resize() {
+  const w = Math.min(window.innerWidth, 900);
+  const h = Math.min(window.innerHeight * 0.7, 400);
+  canvas.width = w;
+  canvas.height = h;
+}
+resize();
+window.addEventListener('resize', () => { resize(); });
+
+// Game state
+let state = 'start'; // start | playing | dead
+let score = 0;
+let bestScore = parseInt(localStorage.getItem('neonDashBest') || '0');
+let frameCount = 0;
+let speed = 5;
+let animFrame;
+
+// Player
+const player = {
+  x: 80,
+  y: 0,
+  size: 28,
+  vy: 0,
+  grounded: false,
+  rotation: 0,
+  dead: false,
+  trail: []
+};
+
+// Obstacles
+let obstacles = [];
+let obstacleTimer = 0;
+let obstacleInterval = 80;
+
+// Particles
+let particles = [];
+
+// Floor
+function getFloorY() {
+  return canvas.height - 60;
+}
+
+function resetGame() {
+  score = 0;
+  frameCount = 0;
+  speed = 5;
+  obstacles = [];
+  obstacleTimer = 0;
+  obstacleInterval = 80;
+  particles = [];
+  player.y = getFloorY() - player.size;
+  player.vy = 0;
+  player.grounded = true;
+  player.dead = false;
+  player.rotation = 0;
+  player.trail = [];
+}
+
+function jump() {
+  if (state === 'start') {
+    state = 'playing';
+    resetGame();
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('deathScreen').classList.add('hidden');
+    gameLoop();
+    return;
+  }
+  if (state === 'dead') {
+    state = 'playing';
+    resetGame();
+    document.getElementById('deathScreen').classList.add('hidden');
+    return;
+  }
+  if (state === 'playing' && player.grounded) {
+    player.vy = -14;
+    player.grounded = false;
+    spawnJumpParticles();
+  }
+}
+
+function spawnJumpParticles() {
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x: player.x + player.size / 2,
+      y: player.y + player.size,
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * -3,
+      life: 1,
+      size: Math.random() * 4 + 2,
+      color: Math.random() > 0.5 ? '#00f5ff' : '#b060ff'
+    });
+  }
+}
+
+function spawnDeathParticles() {
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: player.x + player.size / 2,
+      y: player.y + player.size / 2,
+      vx: (Math.random() - 0.5) * 10,
+      vy: (Math.random() - 0.5) * 10,
+      life: 1,
+      size: Math.random() * 6 + 2,
+      color: Math.random() > 0.5 ? '#00f5ff' : '#ff4060'
+    });
+  }
+}
+
+function spawnObstacle() {
+  const floorY = getFloorY();
+  const types = ['spike', 'block', 'doubleSpike'];
+  const type = types[Math.floor(Math.random() * types.length)];
+
+  if (type === 'spike') {
+    obstacles.push({ x: canvas.width + 20, y: floorY - 30, w: 30, h: 30, type: 'spike' });
+  } else if (type === 'block') {
+    const h = Math.random() > 0.5 ? 30 : 60;
+    obstacles.push({ x: canvas.width + 20, y: floorY - h, w: 30, h, type: 'block' });
+  } else {
+    obstacles.push({ x: canvas.width + 20, y: floorY - 30, w: 30, h: 30, type: 'spike' });
+    obstacles.push({ x: canvas.width + 60, y: floorY - 30, w: 30, h: 30, type: 'spike' });
+  }
+}
+
+function checkCollision(obs) {
+  const px = player.x + 3;
+  const py = player.y + 3;
+  const ps = player.size - 6;
+  return px < obs.x + obs.w && px + ps > obs.x && py < obs.y + obs.h && py + ps > obs.y;
+}
+
+function drawBackground() {
+  ctx.fillStyle = '#07070f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(0,245,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < canvas.width; x += 60) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += 60) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+}
+
+function drawFloor() {
+  const fy = getFloorY();
+  ctx.fillStyle = '#0d0d1a';
+  ctx.fillRect(0, fy, canvas.width, canvas.height - fy);
+  ctx.strokeStyle = '#00f5ff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, fy);
+  ctx.lineTo(canvas.width, fy);
+  ctx.stroke();
+
+  // Floor grid
+  ctx.strokeStyle = 'rgba(0,245,255,0.08)';
+  ctx.lineWidth = 1;
+  const tileSize = 30;
+  const offset = (frameCount * speed) % tileSize;
+  for (let x = -offset; x < canvas.width; x += tileSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, fy);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+}
+
+function drawPlayer() {
+  if (player.dead) return;
+
+  // Trail
+  player.trail.push({ x: player.x, y: player.y, alpha: 0.4 });
+  if (player.trail.length > 8) player.trail.shift();
+
+  player.trail.forEach((t, i) => {
+    const alpha = (i / player.trail.length) * t.alpha;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#00f5ff';
+    ctx.translate(t.x + player.size / 2, t.y + player.size / 2);
+    ctx.rotate(player.rotation * (i / player.trail.length));
+    ctx.fillRect(-player.size / 2, -player.size / 2, player.size, player.size);
+    ctx.restore();
+  });
+
+  // Player cube
+  ctx.save();
+  ctx.translate(player.x + player.size / 2, player.y + player.size / 2);
+  ctx.rotate(player.rotation);
+
+  // Glow
+  ctx.shadowColor = '#00f5ff';
+  ctx.shadowBlur = 15;
+
+  ctx.fillStyle = '#00f5ff';
+  ctx.fillRect(-player.size / 2, -player.size / 2, player.size, player.size);
+
+  ctx.shadowBlur = 0;
+
+  // Inner design
+  ctx.strokeStyle = '#07070f';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-player.size / 2 + 4, -player.size / 2 + 4, player.size - 8, player.size - 8);
+
+  ctx.fillStyle = '#07070f';
+  ctx.fillRect(-4, -4, 8, 8);
+
+  ctx.restore();
+}
+
+function drawObstacle(obs) {
+  ctx.save();
+  ctx.shadowColor = '#ff4060';
+  ctx.shadowBlur = 10;
+
+  if (obs.type === 'spike') {
+    ctx.fillStyle = '#ff4060';
+    ctx.beginPath();
+    ctx.moveTo(obs.x, obs.y + obs.h);
+    ctx.lineTo(obs.x + obs.w / 2, obs.y);
+    ctx.lineTo(obs.x + obs.w, obs.y + obs.h);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#ff8090';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = '#c040ff';
+    ctx.shadowColor = '#c040ff';
+    ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+    ctx.strokeStyle = '#e080ff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(obs.x + 2, obs.y + 2, obs.w - 4, obs.h - 4);
+  }
+
+  ctx.restore();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
+    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    ctx.restore();
+  });
+}
+
+function drawHUD() {
+  // Progress bar at top
+  const progress = Math.min(score / 500, 1);
+  ctx.fillStyle = '#1e1e35';
+  ctx.fillRect(0, 0, canvas.width, 3);
+  ctx.fillStyle = '#00f5ff';
+  ctx.fillRect(0, 0, canvas.width * progress, 3);
+}
+
+function update() {
+  if (state !== 'playing') return;
+
+  frameCount++;
+  score++;
+  speed = 5 + Math.floor(score / 200) * 0.5;
+  obstacleInterval = Math.max(45, 80 - Math.floor(score / 300) * 5);
+
+  document.getElementById('scoreDisplay').textContent = score;
+
+  // Player physics
+  player.vy += 0.7; // gravity
+  player.y += player.vy;
+
+  const floorY = getFloorY();
+  if (player.y >= floorY - player.size) {
+    player.y = floorY - player.size;
+    player.vy = 0;
+    player.grounded = true;
+  } else {
+    player.grounded = false;
+  }
+
+  // Rotation when airborne
+  if (!player.grounded) {
+    player.rotation += 0.1;
+  } else {
+    player.rotation = Math.round(player.rotation / (Math.PI / 2)) * (Math.PI / 2);
+  }
+
+  // Obstacles
+  obstacleTimer++;
+  if (obstacleTimer >= obstacleInterval) {
+    spawnObstacle();
+    obstacleTimer = 0;
+  }
+
+  obstacles = obstacles.filter(o => o.x + o.w > -10);
+  obstacles.forEach(o => {
+    o.x -= speed;
+    if (checkCollision(o)) {
+      die();
+    }
+  });
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.2;
+    p.life -= 0.04;
+  });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function die() {
+  if (player.dead) return;
+  player.dead = true;
+  state = 'dead';
+  spawnDeathParticles();
+
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('neonDashBest', bestScore);
+  }
+
+  setTimeout(() => {
+    document.getElementById('deathScore').textContent = score;
+    document.getElementById('bestScoreDeath').textContent = bestScore;
+    document.getElementById('bestScoreStart').textContent = bestScore;
+    const pct = Math.min((score / 500) * 100, 100).toFixed(0);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('deathScreen').classList.remove('hidden');
+  }, 600);
+}
+
+function draw() {
+  drawBackground();
+  drawFloor();
+  drawObstacle && obstacles.forEach(drawObstacle);
+  drawPlayer();
+  drawParticles();
+  drawHUD();
+}
+
+function gameLoop() {
+  update();
+  draw();
+  if (state === 'playing' || state === 'dead') {
+    animFrame = requestAnimationFrame(gameLoop);
+  }
+}
+
+// Draw static start screen background
+function drawStatic() {
+  drawBackground();
+  drawFloor();
+  // Draw a static player
+  ctx.save();
+  ctx.shadowColor = '#00f5ff';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = '#00f5ff';
+  const px = 80, py = getFloorY() - player.size;
+  ctx.fillRect(px, py, player.size, player.size);
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#07070f';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(px + 4, py + 4, player.size - 8, player.size - 8);
+  ctx.fillStyle = '#07070f';
+  ctx.fillRect(px + player.size/2 - 4, py + player.size/2 - 4, 8, 8);
+  ctx.restore();
+}
+drawStatic();
+
+// Update best score display
+document.getElementById('bestScoreStart').textContent = bestScore;
+
+// Input
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); jump(); }
+});
+canvas.addEventListener('click', jump);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, { passive: false });
+
+document.getElementById('startBtn').addEventListener('click', jump);
+document.getElementById('retryBtn').addEventListener('click', jump);
+</script>
+</body>
+</html>
