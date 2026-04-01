@@ -48,6 +48,11 @@
     .wbadges{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin:1rem 0}
     .wbadge{font-size:.6rem;padding:3px 8px;border:1px solid #2a2a45;color:#888}
     .wbadge.ev{border-color:#ff4090;color:#ff4090}
+
+    #joystick-wrap { position:fixed; bottom:30px; left:30px; z-index:200; touch-action:none; display:none; }
+    #joystick-base { width:110px; height:110px; border-radius:50%; background:rgba(0,245,255,.1); border:2px solid rgba(0,245,255,.3); display:flex; align-items:center; justify-content:center; }
+    #joystick-thumb { width:44px; height:44px; border-radius:50%; background:rgba(0,245,255,.5); border:2px solid #00f5ff; position:absolute; transform:translate(-50%,-50%); left:50%; top:50%; }
+    @media (pointer:coarse) { #joystick-wrap { display:block; } }
   </style>
 </head>
 <body>
@@ -62,6 +67,12 @@
 </div>
 <canvas id="c"></canvas>
 <div class="xp-wrap"><div class="xp-fill" id="xpBar" style="width:0%"></div></div>
+
+<div id="joystick-wrap">
+  <div id="joystick-base">
+    <div id="joystick-thumb"></div>
+  </div>
+</div>
 <div id="gFlash"></div>
 <div id="gText"></div>
 <div id="evBanner"></div>
@@ -132,6 +143,50 @@ const P={x:0,y:0,hp:100,maxHp:100,spd:165,size:13,xp:0,xpNext:20,level:1,weapons
 let enemies=[],bullets=[],parts=[],chests=[];
 const wt={};
 
+
+// ── ジョイスティック ──
+const jWrap = document.getElementById('joystick-wrap');
+const jBase = document.getElementById('joystick-base');
+const jThumb = document.getElementById('joystick-thumb');
+const jState = { active: false, id: null, dx: 0, dy: 0, baseX: 0, baseY: 0 };
+const jRadius = 40;
+
+jBase.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  jState.active = true; jState.id = t.identifier;
+  const r = jBase.getBoundingClientRect();
+  jState.baseX = r.left + r.width/2; jState.baseY = r.top + r.height/2;
+}, { passive: false });
+
+window.addEventListener('touchmove', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    if (t.identifier === jState.id) {
+      const dx = t.clientX - jState.baseX;
+      const dy = t.clientY - jState.baseY;
+      const dist = Math.hypot(dx, dy);
+      const clamped = Math.min(dist, jRadius);
+      const angle = Math.atan2(dy, dx);
+      jState.dx = Math.cos(angle) * (clamped / jRadius);
+      jState.dy = Math.sin(angle) * (clamped / jRadius);
+      const ox = Math.cos(angle) * clamped;
+      const oy = Math.sin(angle) * clamped;
+      jThumb.style.left = (50 + ox / jBase.offsetWidth * 100) + '%';
+      jThumb.style.top = (50 + oy / jBase.offsetHeight * 100) + '%';
+    }
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === jState.id) {
+      jState.active = false; jState.id = null; jState.dx = 0; jState.dy = 0;
+      jThumb.style.left = '50%'; jThumb.style.top = '50%';
+    }
+  }
+});
+
 window.addEventListener('keydown',e=>keys[e.code]=true);
 window.addEventListener('keyup',e=>keys[e.code]=false);
 window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
@@ -168,9 +223,14 @@ function update(dt){
   if(keys['ArrowRight']||keys['KeyD'])dx+=1;
   if(keys['ArrowUp']||keys['KeyW'])dy-=1;
   if(keys['ArrowDown']||keys['KeyS'])dy+=1;
-  const cx=C.width/2,cy=C.height/2;
-  const mx=mouse.x-cx,my=mouse.y-cy,md=Math.hypot(mx,my);
-  if(md>70&&dx===0&&dy===0){dx=mx/md;dy=my/md;}
+  // ジョイスティック
+  if(jState.active && (jState.dx !== 0 || jState.dy !== 0)) {
+    dx = jState.dx; dy = jState.dy;
+  } else {
+    const cx=C.width/2,cy=C.height/2;
+    const mx=mouse.x-cx,my=mouse.y-cy,md=Math.hypot(mx,my);
+    if(md>70&&dx===0&&dy===0){dx=mx/md;dy=my/md;}
+  }
   const L=Math.hypot(dx,dy);if(L>0){dx/=L;dy/=L;}
   const moveSpd=lbActive?P.spd*1.8:P.spd;
   P.x+=dx*moveSpd*dt;P.y+=dy*moveSpd*dt;
