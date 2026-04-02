@@ -1,1 +1,710 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUNGEON CLICKER — GAMELAB</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#07070f;--bg2:#0d0d1a;--bg3:#111122;--border:#1e1e35;--gold:#ffd700;--cyan:#00f5ff;--red:#ff4060;--purple:#c060ff;--green:#40ff80;--text:#d0d0e0;--dim:#606080}
+    body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden}
+    a{color:var(--dim);text-decoration:none;font-size:.7rem;letter-spacing:.2em;font-family:'Orbitron',monospace}
+    a:hover{color:var(--cyan)}
 
+    .top-bar{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:.5rem 1rem;z-index:100;background:rgba(7,7,15,.9);border-bottom:1px solid var(--border)}
+    .top-title{font-family:'Orbitron',monospace;font-size:.8rem;color:var(--gold);letter-spacing:.15em}
+
+    .layout{display:grid;grid-template-columns:1fr 300px;min-height:100vh;padding-top:44px}
+    @media(max-width:700px){.layout{grid-template-columns:1fr}.right-panel{display:none}.layout{padding-bottom:56px}}
+
+    /* LEFT */
+    .left-panel{padding:1rem;display:flex;flex-direction:column;align-items:center;gap:.8rem;border-right:1px solid var(--border)}
+
+    .floor-row{display:flex;align-items:center;gap:1rem}
+    .floor-num{font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--gold)}
+    .rank-badge{font-family:'Orbitron',monospace;font-size:.7rem;color:var(--purple);border:1px solid var(--purple);padding:3px 8px}
+
+    /* COMBO */
+    .combo-bar-wrap{width:100%;max-width:420px;height:4px;background:#1e1e35;border-radius:2px;overflow:hidden}
+    .combo-bar{height:100%;background:linear-gradient(90deg,#ff8020,#ffd700);transition:width .1s;border-radius:2px}
+    .combo-display{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;transition:all .2s;min-height:1.8rem;text-align:center}
+
+    /* MONSTER AREA */
+    .monster-wrap{position:relative;width:100%;max-width:420px}
+    .monster-area{width:100%;background:var(--bg2);border:1px solid var(--border);padding:1.2rem;text-align:center;cursor:pointer;transition:background .1s;touch-action:manipulation;position:relative;overflow:hidden}
+    .monster-area:active{background:var(--bg3)}
+    .monster-bg{position:absolute;inset:0;opacity:0;transition:opacity .3s;pointer-events:none}
+    .monster-name{font-family:'Orbitron',monospace;font-size:.9rem;color:#fff;margin-bottom:.4rem}
+    .monster-emoji{font-size:5rem;display:block;margin:.3rem 0;transition:transform .08s}
+    .monster-emoji.shake{animation:shake .3s ease}
+    @keyframes shake{0%,100%{transform:translateX(0) scale(1)}25%{transform:translateX(-8px) scale(1.1)}75%{transform:translateX(8px) scale(1.05)}}
+    .hp-wrap{width:100%;height:10px;background:#1e1e35;border-radius:5px;overflow:hidden;margin:.4rem 0}
+    .hp-bar{height:100%;border-radius:5px;transition:width .15s}
+    .hp-text{font-size:.68rem;color:var(--dim)}
+    .click-hint{font-size:.58rem;color:#2a2a4a;letter-spacing:.15em;margin-top:.3rem}
+
+    /* DMG FLOATS */
+    .dmg-float{position:absolute;font-family:'Orbitron',monospace;font-weight:900;pointer-events:none;z-index:50;white-space:nowrap;animation:floatUp .9s ease-out forwards}
+    @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-90px) scale(.6)}}
+
+    /* ITEM DROP */
+    .item-drop{position:absolute;pointer-events:none;z-index:60;animation:dropIn .5s ease-out forwards}
+    @keyframes dropIn{0%{opacity:0;transform:translateY(-20px) scale(.5)}60%{opacity:1;transform:translateY(5px) scale(1.2)}100%{opacity:1;transform:translateY(0) scale(1)}}
+
+    /* SCREEN FLASH */
+    .screen-flash{position:fixed;inset:0;pointer-events:none;z-index:500;opacity:0;transition:opacity .05s}
+
+    /* RESOURCES */
+    .resources{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+    .res-item{text-align:center;min-width:70px}
+    .res-num{font-family:'Orbitron',monospace;font-size:1rem;color:var(--gold)}
+    .res-label{font-size:.58rem;color:var(--dim);letter-spacing:.1em}
+
+    /* SKILLS */
+    .skills-row{display:flex;gap:.6rem;width:100%;max-width:420px}
+    .skill-btn{flex:1;background:var(--bg2);border:1px solid var(--border);padding:.6rem .3rem;cursor:pointer;transition:all .2s;text-align:center;position:relative;overflow:hidden}
+    .skill-btn:hover:not(:disabled){border-color:var(--cyan)}
+    .skill-btn:disabled{opacity:.4;cursor:not-allowed}
+    .skill-btn.ready{border-color:var(--gold);box-shadow:0 0 10px rgba(255,215,0,.3)}
+    .skill-icon{font-size:1.3rem}
+    .skill-name{font-size:.55rem;color:#aaa;letter-spacing:.05em;margin-top:.2rem;font-family:'Orbitron',monospace}
+    .skill-cd{font-size:.55rem;color:var(--dim);margin-top:.1rem}
+    .skill-cooldown-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--cyan);transition:width .1s}
+
+    /* UPGRADES */
+    .section-title{font-size:.65rem;color:var(--cyan);letter-spacing:.2em;width:100%;max-width:420px;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+    .upgrades{display:flex;flex-direction:column;gap:.4rem;width:100%;max-width:420px}
+    .upg-btn{background:var(--bg2);border:1px solid var(--border);padding:.6rem .8rem;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center;text-align:left;width:100%}
+    .upg-btn:hover:not(:disabled){border-color:var(--gold);background:var(--bg3)}
+    .upg-btn:disabled{opacity:.35;cursor:not-allowed}
+    .upg-btn.owned{border-color:var(--green);opacity:.6}
+    .upg-name{font-size:.72rem;color:#fff;font-family:'Orbitron',monospace}
+    .upg-desc{font-size:.6rem;color:var(--dim);margin-top:.15rem}
+    .upg-cost{font-size:.7rem;color:var(--gold);white-space:nowrap;margin-left:.5rem}
+    .upg-cost.cant{color:var(--red)}
+
+    /* PRESTIGE */
+    .prestige-btn{background:linear-gradient(135deg,#200040,#100020);border:1px solid var(--purple);padding:.7rem;cursor:pointer;color:var(--purple);font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:.08em;transition:all .2s;width:100%;max-width:420px}
+    .prestige-btn:hover:not(:disabled){background:linear-gradient(135deg,#300060,#200040)}
+    .prestige-btn:disabled{opacity:.3;cursor:not-allowed}
+
+    /* BOSS WARNING */
+    .boss-warn{background:rgba(255,64,96,.1);border:1px solid var(--red);padding:.4rem 1rem;text-align:center;font-size:.68rem;color:var(--red);letter-spacing:.1em;animation:blink .7s infinite alternate;width:100%;max-width:420px}
+    @keyframes blink{from{opacity:.5}to{opacity:1}}
+
+    /* RIGHT */
+    .right-panel{padding:1rem;display:flex;flex-direction:column;gap:1rem;overflow-y:auto;max-height:calc(100vh - 44px)}
+    .panel-title{font-size:.65rem;color:var(--cyan);letter-spacing:.2em;border-bottom:1px solid var(--border);padding-bottom:.3rem;margin-bottom:.5rem}
+    .auto-list{display:flex;flex-direction:column;gap:.4rem}
+    .auto-item{background:var(--bg2);border:1px solid var(--border);padding:.6rem;cursor:pointer;transition:all .15s;display:flex;gap:.6rem;align-items:center}
+    .auto-item:hover:not(.off){border-color:var(--cyan);background:var(--bg3)}
+    .auto-item.off{opacity:.35;cursor:not-allowed}
+    .auto-icon{font-size:1.3rem;min-width:32px;text-align:center}
+    .auto-info{flex:1}
+    .auto-name{font-size:.68rem;color:#fff;font-family:'Orbitron',monospace}
+    .auto-desc{font-size:.56rem;color:var(--dim);margin-top:.1rem}
+    .auto-owned{font-size:.56rem;color:var(--green);margin-top:.1rem}
+    .auto-cost-txt{font-size:.65rem;color:var(--gold);white-space:nowrap}
+    .auto-cost-txt.cant{color:var(--red)}
+
+    /* INVENTORY */
+    .inventory{display:flex;flex-wrap:wrap;gap:.4rem}
+    .inv-item{background:var(--bg2);border:1px solid var(--border);padding:.4rem .6rem;font-size:.62rem;cursor:pointer;transition:all .15s}
+    .inv-item:hover{border-color:var(--gold)}
+    .inv-item.rare{border-color:var(--purple);color:var(--purple)}
+    .inv-item.epic{border-color:var(--gold);color:var(--gold)}
+
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);padding:.5rem;text-align:center}
+    .stat-val{font-family:'Orbitron',monospace;font-size:.85rem;color:var(--cyan)}
+    .stat-lbl{font-size:.55rem;color:var(--dim);margin-top:.15rem}
+
+    /* MOBILE */
+    .mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);z-index:100}
+    @media(max-width:700px){.mobile-tabs{display:flex}}
+    .mtab{flex:1;padding:.7rem;text-align:center;font-size:.58rem;color:var(--dim);cursor:pointer;border:none;background:none;letter-spacing:.05em}
+    .mtab.active{color:var(--cyan)}
+
+    /* NOTIFICATION */
+    #notif{position:fixed;top:55px;left:50%;transform:translateX(-50%);font-family:'Orbitron',monospace;font-size:.8rem;background:rgba(0,0,0,.9);border:1px solid var(--gold);color:var(--gold);padding:.4rem 1.2rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+  </style>
+</head>
+<body>
+
+<div class="screen-flash" id="flash"></div>
+<div id="notif"></div>
+
+<div class="top-bar">
+  <a href="../index.html">← GAMELAB</a>
+  <div class="top-title" id="topGold">💰 0 G</div>
+</div>
+
+<div class="layout">
+  <div class="left-panel" id="panelDungeon">
+
+    <div class="floor-row">
+      <div class="floor-num" id="floorNum">Floor 1</div>
+      <div class="rank-badge" id="rankBadge">ADVENTURER</div>
+    </div>
+
+    <!-- COMBO -->
+    <div style="width:100%;max-width:420px">
+      <div class="combo-display" id="comboDisplay"></div>
+      <div class="combo-bar-wrap"><div class="combo-bar" id="comboBar" style="width:0%"></div></div>
+    </div>
+
+    <div id="bossWarn" class="boss-warn" style="display:none">⚠️ BOSS BATTLE ⚠️</div>
+
+    <!-- MONSTER -->
+    <div class="monster-wrap">
+      <div class="monster-area" id="monsterArea">
+        <div class="monster-bg" id="monsterBg"></div>
+        <div class="monster-name" id="monsterName">スライム</div>
+        <span class="monster-emoji" id="monsterEmoji">🟢</span>
+        <div class="hp-wrap"><div class="hp-bar" id="hpBar" style="width:100%;background:#ff4060"></div></div>
+        <div class="hp-text" id="hpText">100 / 100 HP</div>
+        <div class="click-hint">TAP / CLICK to attack!</div>
+      </div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="skills-row" id="skillsRow"></div>
+
+    <!-- RESOURCES -->
+    <div class="resources">
+      <div class="res-item"><div class="res-num" id="goldDisp">0</div><div class="res-label">GOLD</div></div>
+      <div class="res-item"><div class="res-num" id="dpsDisp">0</div><div class="res-label">DPS</div></div>
+      <div class="res-item"><div class="res-num" id="clickDisp">1</div><div class="res-label">CLICK DMG</div></div>
+      <div class="res-item"><div class="res-num" id="gemDisp">0</div><div class="res-label">💎 GEMS</div></div>
+    </div>
+
+    <div class="section-title">⚔️ UPGRADES</div>
+    <div class="upgrades" id="upgradesList"></div>
+    <button class="prestige-btn" id="prestigeBtn" onclick="prestige()" disabled>✨ PRESTIGE</button>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-panel" id="panelShop">
+    <div>
+      <div class="panel-title">🏰 AUTO PARTY</div>
+      <div class="auto-list" id="autoList"></div>
+    </div>
+    <div>
+      <div class="panel-title">🎒 INVENTORY</div>
+      <div class="inventory" id="inventory"><div style="font-size:.62rem;color:var(--dim)">アイテムをドロップで入手</div></div>
+    </div>
+    <div>
+      <div class="panel-title">📊 STATS</div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="mobile-tabs">
+  <button class="mtab active" onclick="switchTab('dungeon',this)">⚔️ DUNGEON</button>
+  <button class="mtab" onclick="switchTab('shop',this)">🏰 PARTY</button>
+  <button class="mtab" onclick="switchTab('stats',this)">📊 STATS</button>
+</div>
+
+<script>
+// ── MONSTERS ──
+const MONSTERS=[
+  {name:'スライム',   emoji:'🟢',hp:50,   gold:3,   color:'#40ff80'},
+  {name:'ゴブリン',   emoji:'👺',hp:130,  gold:8,   color:'#ff8020'},
+  {name:'スケルトン', emoji:'💀',hp:300,  gold:18,  color:'#c0c0c0'},
+  {name:'オーク',     emoji:'👹',hp:700,  gold:35,  color:'#80ff40'},
+  {name:'ゾンビ',     emoji:'🧟',hp:1500, gold:70,  color:'#60c040'},
+  {name:'ウルフ',     emoji:'🐺',hp:3000, gold:140, color:'#a0a0ff'},
+  {name:'ドラゴン子', emoji:'🐲',hp:7000, gold:300, color:'#ff6020'},
+  {name:'デーモン',   emoji:'😈',hp:15000,gold:600, color:'#ff2040'},
+];
+const BOSSES=[
+  {name:'💀 骸骨王',      emoji:'☠️', hp:2500,  gold:600,  color:'#ffd700',isBoss:true},
+  {name:'🔥 炎の魔人',   emoji:'🔥', hp:10000, gold:2000, color:'#ff8020',isBoss:true},
+  {name:'🐉 古代ドラゴン',emoji:'🐉', hp:40000, gold:7000, color:'#ff4060',isBoss:true},
+  {name:'👿 大魔王',      emoji:'👿', hp:150000,gold:20000,color:'#c060ff',isBoss:true},
+];
+
+// ── ITEMS ──
+const ITEMS=[
+  {name:'🗡️ 錆びた剣',    rarity:'normal',effect:'clickMult',val:1.2,desc:'クリックDMG+20%'},
+  {name:'🏹 木の弓',       rarity:'normal',effect:'dpsMult', val:1.2,desc:'DPS+20%'},
+  {name:'💍 幸運の指輪',   rarity:'normal',effect:'goldMult',val:1.3,desc:'GOLD+30%'},
+  {name:'⚡ 雷の石',       rarity:'rare',  effect:'clickMult',val:1.5,desc:'クリックDMG+50%'},
+  {name:'🔮 魔法のオーブ', rarity:'rare',  effect:'dpsMult', val:1.5,desc:'DPS+50%'},
+  {name:'💎 伝説の宝石',   rarity:'epic',  effect:'all',     val:2.0,desc:'全能力×2'},
+  {name:'🌟 星の欠片',     rarity:'epic',  effect:'critChance',val:.15,desc:'クリティカル率+15%'},
+];
+
+// ── SKILLS ──
+const SKILLS=[
+  {id:'rage',    name:'レイジ',    icon:'🔥',desc:'10秒間DMG×5',  cd:15, duration:10, color:'#ff8020'},
+  {id:'thunder', name:'サンダー',  icon:'⚡',desc:'全敵に大ダメージ',cd:10, duration:0,  color:'#80f0ff'},
+  {id:'gold',    name:'黄金熱',    icon:'💰',desc:'10秒間GOLD×3',  cd:20, duration:10, color:'#ffd700'},
+];
+
+// ── AUTOS ──
+const AUTOS=[
+  {id:'squire', name:'見習い騎士',icon:'🗡️',desc:'自動攻撃',      baseCost:15,   baseDps:0.75,  costMult:1.15},
+  {id:'archer', name:'アーチャー',icon:'🏹',desc:'遠距離攻撃',    baseCost:80,   baseDps:3,   costMult:1.15},
+  {id:'mage',   name:'魔法使い',  icon:'🧙',desc:'魔法攻撃',      baseCost:350,  baseDps:12,   costMult:1.15},
+  {id:'knight', name:'騎士団長',  icon:'⚔️',desc:'DPS大幅UP',     baseCost:3000, baseDps:75,  costMult:1.15},
+  {id:'dragon', name:'竜騎士',    icon:'🐲',desc:'伝説の戦士',    baseCost:15000,baseDps:300, costMult:1.15},
+  {id:'demon',  name:'召喚悪魔',  icon:'😈',desc:'悪魔の力',      baseCost:80000,baseDps:1200, costMult:1.15},
+];
+
+// ── UPGRADES ──
+const UPGRADES=[
+  {id:'c1',name:'鋭い剣',    desc:'クリックDMG×2',cost:50,   owned:false,e:()=>{G.clickMult*=2}},
+  {id:'c2',name:'魔法の剣',  desc:'クリックDMG×3',cost:500,  owned:false,e:()=>{G.clickMult*=3}},
+  {id:'c3',name:'聖剣',      desc:'クリックDMG×5',cost:5000, owned:false,e:()=>{G.clickMult*=5}},
+  {id:'d1',name:'訓練強化',  desc:'全DPS×2',       cost:200,  owned:false,e:()=>{G.dpsMult*=2}},
+  {id:'d2',name:'戦術書',    desc:'全DPS×3',       cost:2000, owned:false,e:()=>{G.dpsMult*=3}},
+  {id:'d3',name:'英雄指揮',  desc:'全DPS×5',       cost:20000,owned:false,e:()=>{G.dpsMult*=5}},
+  {id:'g1',name:'金の袋',    desc:'GOLD×1.5',      cost:300,  owned:false,e:()=>{G.goldMult*=1.5}},
+  {id:'g2',name:'商人の術',  desc:'GOLD×2',        cost:3000, owned:false,e:()=>{G.goldMult*=2}},
+  {id:'k1',name:'クリ眼',    desc:'クリ率10%',      cost:800,  owned:false,e:()=>{G.critChance+=.1}},
+  {id:'k2',name:'暗殺術',    desc:'クリ率25%',      cost:8000, owned:false,e:()=>{G.critChance+=.15}},
+];
+
+const RANKS=[
+  {name:'ADVENTURER',color:'#888',mult:1},
+  {name:'WARRIOR',   color:'#60ff90',mult:2},
+  {name:'KNIGHT',    color:'#60b0ff',mult:4},
+  {name:'HERO',      color:'#ff8020',mult:8},
+  {name:'LEGEND',    color:'#ffd700',mult:16},
+  {name:'CHAMPION',  color:'#ff40ff',mult:32},
+];
+
+// ── STATE ──
+const G={
+  gold:0,totalGold:0,totalClicks:0,totalKills:0,gems:0,
+  clickMult:1,dpsMult:1,goldMult:1,critChance:.05,
+  prestige:0,prestigeMult:1,
+  floor:1,killsOnFloor:0,killsNeeded:5,
+  isBoss:false,
+  monster:null,mHp:0,mMaxHp:0,
+  autos:{},dps:0,
+  combo:0,comboTimer:0,comboMult:1,
+  skillCds:{},skillActive:{},
+  inventory:[],
+  startTime:Date.now(),
+  rageActive:false,goldActive:false,
+};
+AUTOS.forEach(a=>G.autos[a.id]=0);
+SKILLS.forEach(s=>{G.skillCds[s.id]=0;G.skillActive[s.id]=false;});
+
+// ── HELPERS ──
+function fmt(n){
+  if(n>=1e12)return(n/1e12).toFixed(1)+'T';
+  if(n>=1e9)return(n/1e9).toFixed(1)+'B';
+  if(n>=1e6)return(n/1e6).toFixed(1)+'M';
+  if(n>=1e3)return(n/1e3).toFixed(1)+'K';
+  return Math.floor(n).toString();
+}
+
+function notify(msg,color='#ffd700'){
+  const el=document.getElementById('notif');
+  el.textContent=msg;el.style.color=color;el.style.borderColor=color;el.style.opacity='1';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',2500);
+}
+
+function flashScreen(color){
+  const el=document.getElementById('flash');
+  el.style.background=color;el.style.opacity='.4';
+  setTimeout(()=>el.style.opacity='0',150);
+}
+
+// ── SPAWN ──
+function spawnMonster(){
+  const isBoss=G.killsOnFloor>=G.killsNeeded;
+  G.isBoss=isBoss;
+  document.getElementById('bossWarn').style.display=isBoss?'block':'none';
+
+  let m;
+  if(isBoss){
+    const bi=Math.min(Math.floor(G.floor/5),BOSSES.length-1);
+    m={...BOSSES[bi]};
+    const scale=1+G.floor*.2+G.prestige*.6;
+    m.hp=Math.floor(m.hp*scale);
+    m.goldVal=Math.floor(m.gold*scale*G.goldMult*G.prestigeMult);
+  } else {
+    const mi=Math.min(Math.floor(G.floor/2),MONSTERS.length-1);
+    m={...MONSTERS[mi]};
+    const scale=1+G.floor*.12+G.prestige*.3;
+    m.hp=Math.floor(m.hp*scale);
+    m.goldVal=Math.floor(m.gold*scale*G.goldMult*G.prestigeMult);
+  }
+  G.monster=m;G.mHp=m.hp;G.mMaxHp=m.hp;
+  updateMonsterUI();
+}
+
+function updateMonsterUI(){
+  const m=G.monster;if(!m)return;
+  document.getElementById('monsterName').textContent=m.name;
+  document.getElementById('monsterEmoji').textContent=m.emoji;
+  const pct=Math.max(0,G.mHp/G.mMaxHp*100);
+  document.getElementById('hpBar').style.width=pct+'%';
+  document.getElementById('hpBar').style.background=m.color||'#ff4060';
+  document.getElementById('hpText').textContent=`${fmt(Math.max(0,G.mHp))} / ${fmt(G.mMaxHp)} HP`;
+  document.getElementById('monsterBg').style.background=`radial-gradient(circle at center,${m.color}11 0%,transparent 70%)`;
+  document.getElementById('monsterBg').style.opacity='1';
+}
+
+// ── CLICK ──
+document.getElementById('monsterArea').addEventListener('click',clickMonster);
+document.getElementById('monsterArea').addEventListener('touchstart',e=>{e.preventDefault();clickMonster(e.touches[0]);},{passive:false});
+
+function clickMonster(e){
+  const rect=document.getElementById('monsterArea').getBoundingClientRect();
+  const x=(e.clientX||0)-rect.left;
+  const y=(e.clientY||0)-rect.top;
+
+  G.totalClicks++;
+  G.combo++;
+  G.comboTimer=2.5;
+  G.comboMult=Math.min(1+G.combo*.1,5);
+
+  const isCrit=Math.random()<G.critChance;
+  const rageBonus=G.rageActive?5:1;
+  const base=G.clickMult*G.prestigeMult*G.comboMult*rageBonus;
+  const dmg=isCrit?base*3:base;
+
+  G.mHp-=dmg;
+
+  // Float
+  spawnFloat(x,y,dmg,isCrit);
+
+  // Emoji shake
+  const em=document.getElementById('monsterEmoji');
+  em.classList.remove('shake');
+  void em.offsetWidth;
+  em.classList.add('shake');
+
+  if(isCrit){flashScreen('rgba(255,215,0,.3)');notify('💥 CRITICAL!','#ffd700');}
+
+  checkKill();
+}
+
+function spawnFloat(x,y,dmg,isCrit){
+  const el=document.createElement('div');
+  el.className='dmg-float';
+  el.style.left=x+'px';
+  el.style.top=y+'px';
+  el.style.fontSize=isCrit?'1.5rem':'.85rem';
+  el.style.color=isCrit?'#ffd700':'#ff4060';
+  el.style.textShadow=isCrit?'0 0 10px #ffd700':'none';
+  el.textContent=isCrit?`💥 CRIT! ${fmt(dmg)}`:`-${fmt(dmg)}`;
+  document.getElementById('monsterArea').appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+// ── DPS ──
+function dealDps(dt){
+  if(!G.monster)return;
+  const rageBonus=G.rageActive?5:1;
+  const dps=calcDps()*rageBonus;
+  G.mHp-=dps*dt;
+  checkKill();
+}
+
+function calcDps(){
+  let d=0;AUTOS.forEach(a=>d+=a.baseDps*G.autos[a.id]);
+  return d*G.dpsMult*G.prestigeMult;
+}
+
+// ── KILL ──
+function checkKill(){
+  if(G.mHp<=0){
+    const goldBonus=G.goldActive?3:1;
+    const gold=G.monster.goldVal*goldBonus;
+    G.gold+=gold;G.totalGold+=gold;G.totalKills++;
+
+    // Combo bonus float
+    if(G.combo>5){
+      const el=document.createElement('div');
+      el.className='dmg-float';
+      el.style.left='50%';el.style.top='30%';
+      el.style.fontSize='1rem';el.style.color='#ff8020';
+      el.textContent=`${G.combo} COMBO! ×${G.comboMult.toFixed(1)}`;
+      document.getElementById('monsterArea').appendChild(el);
+      setTimeout(()=>el.remove(),900);
+    }
+
+    // Item drop
+    if(Math.random()<(G.isBoss?.4:.08))dropItem();
+
+    if(G.isBoss){
+      G.floor++;G.killsOnFloor=0;
+      G.killsNeeded=5+Math.floor(G.floor*.5);
+      G.gems++;
+      flashScreen('rgba(255,215,0,.4)');
+      notify(`🏆 BOSS DEFEATED! Floor ${G.floor}へ！`,'#ffd700');
+    } else {
+      G.killsOnFloor++;
+    }
+    spawnMonster();updateUI();
+  } else {
+    updateMonsterUI();
+  }
+}
+
+// ── ITEM DROP ──
+function dropItem(){
+  const pool=G.isBoss
+    ?ITEMS.filter(i=>i.rarity!=='normal')
+    :ITEMS;
+  const item={...pool[Math.floor(Math.random()*pool.length)]};
+
+  // Apply effect immediately
+  if(item.effect==='clickMult')G.clickMult*=item.val;
+  else if(item.effect==='dpsMult')G.dpsMult*=item.val;
+  else if(item.effect==='goldMult')G.goldMult*=item.val;
+  else if(item.effect==='critChance')G.critChance=Math.min(.5,G.critChance+item.val);
+  else if(item.effect==='all'){G.clickMult*=item.val;G.dpsMult*=item.val;G.goldMult*=item.val;}
+
+  G.inventory.push(item);
+  if(G.inventory.length>12)G.inventory.shift();
+
+  notify(`📦 ITEM DROP: ${item.name}！`,item.rarity==='epic'?'#ffd700':item.rarity==='rare'?'#c060ff':'#60ff90');
+  if(item.rarity==='epic')flashScreen('rgba(255,215,0,.5)');
+  else if(item.rarity==='rare')flashScreen('rgba(192,96,255,.3)');
+
+  renderInventory();
+}
+
+// ── SKILLS ──
+function initSkills(){
+  const row=document.getElementById('skillsRow');
+  row.innerHTML='';
+  SKILLS.forEach(s=>{
+    const btn=document.createElement('button');
+    btn.className='skill-btn ready';
+    btn.id='skill-'+s.id;
+    btn.onclick=()=>useSkill(s.id);
+    btn.innerHTML=`<div class="skill-icon">${s.icon}</div><div class="skill-name">${s.name}</div><div class="skill-cd" id="scd-${s.id}">READY</div><div class="skill-cooldown-bar" id="scb-${s.id}" style="width:100%"></div>`;
+    row.appendChild(btn);
+  });
+}
+
+function useSkill(id){
+  const s=SKILLS.find(x=>x.id===id);
+  if(G.skillCds[id]>0)return;
+  G.skillCds[id]=s.cd;
+
+  if(id==='rage'){
+    G.rageActive=true;
+    notify('🔥 RAGE! DMG×5 10秒間！','#ff8020');
+    flashScreen('rgba(255,128,0,.3)');
+    setTimeout(()=>{G.rageActive=false;},s.duration*1000);
+  } else if(id==='thunder'){
+    const dmg=calcDps()*10+G.clickMult*G.prestigeMult*50;
+    G.mHp-=dmg;
+    notify(`⚡ THUNDER! ${fmt(dmg)}ダメージ！`,'#80f0ff');
+    flashScreen('rgba(128,240,255,.4)');
+    checkKill();
+  } else if(id==='gold'){
+    G.goldActive=true;
+    notify('💰 黄金熱! GOLD×3 10秒間！','#ffd700');
+    setTimeout(()=>{G.goldActive=false;},s.duration*1000);
+  }
+}
+
+function updateSkills(dt){
+  SKILLS.forEach(s=>{
+    if(G.skillCds[s.id]>0){
+      G.skillCds[s.id]=Math.max(0,G.skillCds[s.id]-dt);
+      const btn=document.getElementById('skill-'+s.id);
+      const cdEl=document.getElementById('scd-'+s.id);
+      const barEl=document.getElementById('scb-'+s.id);
+      if(btn){
+        const pct=G.skillCds[s.id]/s.cd;
+        btn.className='skill-btn';
+        btn.disabled=true;
+        if(cdEl)cdEl.textContent=Math.ceil(G.skillCds[s.id])+'s';
+        if(barEl)barEl.style.width=(pct*100)+'%';
+      }
+    } else {
+      const btn=document.getElementById('skill-'+s.id);
+      if(btn){
+        btn.className='skill-btn ready';
+        btn.disabled=false;
+        const cdEl=document.getElementById('scd-'+s.id);
+        const barEl=document.getElementById('scb-'+s.id);
+        if(cdEl)cdEl.textContent='READY';
+        if(barEl)barEl.style.width='100%';
+      }
+    }
+  });
+}
+
+// ── COMBO ──
+function updateCombo(dt){
+  if(G.combo>0){
+    G.comboTimer-=dt;
+    if(G.comboTimer<=0){G.combo=0;G.comboMult=1;}
+  }
+  const el=document.getElementById('comboDisplay');
+  const bar=document.getElementById('comboBar');
+  if(G.combo>1){
+    el.textContent=`${G.combo} COMBO ×${G.comboMult.toFixed(1)}`;
+    el.style.color=G.combo>20?'#ffd700':G.combo>10?'#ff8020':'#fff';
+    el.style.fontSize=`${Math.min(.8+G.combo*.03,1.5)}rem`;
+    bar.style.width=(G.comboTimer/2.5*100)+'%';
+  } else {
+    el.textContent='';bar.style.width='0%';
+  }
+}
+
+// ── UPGRADE ──
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id);
+  if(!u||u.owned||G.gold<u.cost)return;
+  G.gold-=u.cost;u.owned=true;u.e();
+  notify(`✅ ${u.name}を購入！`,'#40ff80');
+  updateUI();renderUpgrades();
+}
+
+function renderUpgrades(){
+  const list=document.getElementById('upgradesList');list.innerHTML='';
+  UPGRADES.forEach(u=>{
+    const btn=document.createElement('button');
+    btn.className='upg-btn'+(u.owned?' owned':'');
+    btn.id='upg-'+u.id;btn.disabled=u.owned||G.gold<u.cost;
+    btn.onclick=()=>buyUpgrade(u.id);
+    btn.innerHTML=`<div><div class="upg-name">${u.name}</div><div class="upg-desc">${u.desc}</div></div><div class="upg-cost ${!u.owned&&G.gold<u.cost?'cant':''}">${u.owned?'✓':''+fmt(u.cost)+' G'}</div>`;
+    list.appendChild(btn);
+  });
+}
+
+// ── AUTO ──
+function autoCost(a){return Math.floor(a.baseCost*Math.pow(a.costMult,G.autos[a.id]));}
+function buyAuto(id){
+  const a=AUTOS.find(x=>x.id===id);
+  const cost=autoCost(a);
+  if(G.gold<cost)return;
+  G.gold-=cost;G.autos[id]++;
+  updateUI();renderAutos();
+}
+function renderAutos(){
+  const list=document.getElementById('autoList');list.innerHTML='';
+  AUTOS.forEach(a=>{
+    const cost=autoCost(a);
+    const div=document.createElement('div');
+    div.className='auto-item'+(G.gold<cost?' off':'');
+    div.id='auto-'+a.id;div.onclick=()=>buyAuto(a.id);
+    div.innerHTML=`<div class="auto-icon">${a.icon}</div><div class="auto-info"><div class="auto-name">${a.name}</div><div class="auto-desc">${a.desc} (+${a.baseDps}/s)</div><div class="auto-owned">所持: ${G.autos[a.id]}</div></div><div class="auto-cost-txt ${G.gold<cost?'cant':''}">${fmt(cost)} G</div>`;
+    list.appendChild(div);
+  });
+}
+
+function renderInventory(){
+  const inv=document.getElementById('inventory');
+  if(G.inventory.length===0){inv.innerHTML='<div style="font-size:.62rem;color:var(--dim)">アイテムをドロップで入手</div>';return;}
+  inv.innerHTML='';
+  G.inventory.forEach(item=>{
+    const div=document.createElement('div');
+    div.className='inv-item '+item.rarity;
+    div.title=item.desc;
+    div.textContent=item.name;
+    inv.appendChild(div);
+  });
+}
+
+// ── PRESTIGE ──
+function prestige(){
+  if(G.floor<10)return;
+  G.prestige++;
+  const rank=RANKS[Math.min(G.prestige,RANKS.length-1)];
+  G.prestigeMult=rank.mult;
+  G.gold=0;G.totalGold=0;G.floor=1;G.killsOnFloor=0;G.killsNeeded=5;
+  G.clickMult=1;G.dpsMult=1;G.goldMult=1;G.critChance=.05;
+  G.combo=0;G.comboMult=1;G.comboTimer=0;
+  G.inventory=[];
+  AUTOS.forEach(a=>G.autos[a.id]=0);
+  UPGRADES.forEach(u=>u.owned=false);
+  SKILLS.forEach(s=>{G.skillCds[s.id]=0;G.skillActive[s.id]=false;});
+  flashScreen('rgba(192,96,255,.5)');
+  notify(`✨ PRESTIGE! ${rank.name}に昇格！ ×${rank.mult}パワー`,'#c060ff');
+  spawnMonster();renderAutos();renderUpgrades();renderInventory();updateUI();
+}
+
+// ── MAIN UI ──
+function updateUI(){
+  G.dps=calcDps();
+  const rank=RANKS[Math.min(G.prestige,RANKS.length-1)];
+  document.getElementById('goldDisp').textContent=fmt(G.gold);
+  document.getElementById('dpsDisp').textContent=fmt(G.dps);
+  document.getElementById('clickDisp').textContent=fmt(G.clickMult*G.prestigeMult*G.comboMult*(G.rageActive?5:1));
+  document.getElementById('gemDisp').textContent=G.gems;
+  document.getElementById('topGold').textContent=`💰 ${fmt(G.gold)} G`;
+  document.getElementById('floorNum').textContent=`Floor ${G.floor}`;
+  document.getElementById('rankBadge').textContent=rank.name;
+  document.getElementById('rankBadge').style.borderColor=rank.color;
+  document.getElementById('rankBadge').style.color=rank.color;
+
+  const pBtn=document.getElementById('prestigeBtn');
+  pBtn.disabled=G.floor<10;
+  const nextRank=RANKS[Math.min(G.prestige+1,RANKS.length-1)];
+  pBtn.textContent=G.floor<10?`✨ PRESTIGE — Floor ${G.floor}/10で解放`:`✨ PRESTIGE → ${nextRank.name} (×${nextRank.mult})`;
+
+  // Upgrade buttons refresh
+  UPGRADES.forEach(u=>{
+    const btn=document.getElementById('upg-'+u.id);if(!btn)return;
+    btn.disabled=u.owned||G.gold<u.cost;
+    const costEl=btn.querySelector('.upg-cost');
+    if(costEl&&!u.owned){costEl.textContent=fmt(u.cost)+' G';costEl.className='upg-cost'+(G.gold<u.cost?' cant':'');}
+  });
+
+  // Auto buttons refresh
+  AUTOS.forEach(a=>{
+    const btn=document.getElementById('auto-'+a.id);if(!btn)return;
+    const cost=autoCost(a);
+    btn.className='auto-item'+(G.gold<cost?' off':'');
+    const costEl=btn.querySelector('.auto-cost-txt');
+    if(costEl){costEl.textContent=fmt(cost)+' G';costEl.className='auto-cost-txt'+(G.gold<cost?' cant':'');}
+    const ownEl=btn.querySelector('.auto-owned');
+    if(ownEl)ownEl.textContent=`所持: ${G.autos[a.id]}`;
+  });
+
+  // Stats
+  const elapsed=Math.floor((Date.now()-G.startTime)/1000);
+  const m=Math.floor(elapsed/60),s=(elapsed%60).toString().padStart(2,'0');
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${fmt(G.totalKills)}</div><div class="stat-lbl">KILLS</div></div>
+    <div class="stat-card"><div class="stat-val">${fmt(G.totalClicks)}</div><div class="stat-lbl">CLICKS</div></div>
+    <div class="stat-card"><div class="stat-val">${fmt(G.totalGold)}</div><div class="stat-lbl">TOTAL GOLD</div></div>
+    <div class="stat-card"><div class="stat-val">${m}:${s}</div><div class="stat-lbl">PLAY TIME</div></div>
+    <div class="stat-card"><div class="stat-val">${G.prestige}</div><div class="stat-lbl">PRESTIGE</div></div>
+    <div class="stat-card"><div class="stat-val">${G.gems}</div><div class="stat-lbl">💎 GEMS</div></div>
+  `;
+}
+
+// ── MOBILE TABS ──
+function switchTab(tab,el){
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const dungeon=document.getElementById('panelDungeon');
+  const shop=document.getElementById('panelShop');
+  if(tab==='dungeon'){dungeon.style.display='';shop.style.display='none';}
+  else{dungeon.style.display='none';shop.style.display='block';}
+}
+
+// ── LOOP ──
+let lastT=Date.now();
+function loop(){
+  const now=Date.now(),dt=(now-lastT)/1000;lastT=now;
+  dealDps(dt);
+  updateCombo(dt);
+  updateSkills(dt);
+  updateUI();
+  requestAnimationFrame(loop);
+}
+
+// ── INIT ──
+spawnMonster();initSkills();renderAutos();renderUpgrades();renderInventory();updateUI();loop();
+</script>
+</body>
+</html>
